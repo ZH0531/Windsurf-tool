@@ -30,6 +30,7 @@
   "build": {
     "appId": "com.papercrane.windsurf",
     "productName": "PaperCrane-Windsurf",
+    "publish": null,
     "directories": {
       "output": "dist"
     },
