@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PaperCrane-Windsurf</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 左侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>PaperCrane</h1>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-page="home">
+          <i data-lucide="home" class="nav-icon"></i>
+          <span class="nav-text">主页</span>
+        </a>
+        <a href="#" class="nav-item" data-page="switch">
+          <i data-lucide="repeat" class="nav-icon"></i>
+          <span class="nav-text">切换账号</span>
+        </a>
+        <a href="#" class="nav-item" data-page="logs">
+          <i data-lucide="file-text" class="nav-icon"></i>
+          <span class="nav-text">日志</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- 右侧主内容区 -->
+    <main class="main-content">
+      <!-- 主页 -->
+      <div class="page active" id="page-home">
+        <div class="page-header">
+          <h2>Windsurf 续杯工具</h2>
+        </div>
+        
+        <!-- 信息卡片 -->
+        <div class="info-card">
+          <div class="card-header-row">
+            <h3>账号信息</h3>
+            <button id="refresh-btn" class="icon-btn" title="刷新信息">
+              <i data-lucide="refresh-cw"></i>
+            </button>
+          </div>
+          <div class="status-section">
+            <div class="status-row">
+              <span class="status-label">状态：</span>
+              <div class="status-value">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">检测中...</span>
+              </div>
+            </div>
+            
+            <div class="status-row">
+              <span class="status-label">当前账号：</span>
+              <span class="status-value" id="current-email">加载中...</span>
+            </div>
+            
+            <div class="status-row">
+              <span class="status-label">Token：</span>
+              <span class="status-value" id="current-token">加载中...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 安装目录 -->
+        <div class="info-card">
+          <h3>安装目录</h3>
+          <div class="path-row">
+            <span id="windsurf-path" class="path-text">检测中...</span>
+            <div class="path-actions">
+              <button id="select-path-btn" class="icon-btn" title="选择安装目录">
+                <i data-lucide="folder-open"></i>
+              </button>
+              <button id="detect-path-btn" class="icon-btn" title="重新检测">
+                <i data-lucide="refresh-cw"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 快捷操作 -->
+        <div class="info-card">
+          <h3>快捷操作</h3>
+          <div class="quick-actions">
+            <button id="reset-device-btn" class="action-btn">
+              <i data-lucide="smartphone"></i>
+              <span>重置设备码</span>
+            </button>
+            <button id="kill-windsurf-btn" class="action-btn">
+              <i data-lucide="x-circle"></i>
+              <span>关闭 Windsurf</span>
+            </button>
+            <button id="launch-windsurf-btn" class="action-btn">
+              <i data-lucide="play-circle"></i>
+              <span>启动 Windsurf</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 切换账号页面 -->
+      <div class="page" id="page-switch">
+        <div class="page-header">
+          <h2>切换账号</h2>
+        </div>
+        
+        <div class="form-container">
+          <div class="form-group">
+            <label>Token（API Key）</label>
+            <input type="password" id="token-input" placeholder="sk-ws-...">
+          </div>
+          
+          <div class="form-group">
+            <label>邮箱</label>
+            <input type="email" id="email-input" placeholder="your@email.com">
+          </div>
+          
+          <div class="form-group">
+            <label>显示标签</label>
+            <input type="text" id="label-input" placeholder="PaperCrane" value="PaperCrane">
+            <small>默认为 PaperCrane，可自定义</small>
+          </div>
+          
+          <button id="switch-btn" class="btn btn-primary btn-large">
+            <i data-lucide="repeat"></i>
+            <span>切换账号</span>
+          </button>
+          <p class="tip">切换账号将自动关闭并重启 Windsurf，请稍候</p>
+        </div>
+      </div>
+
+      <!-- 日志页面 -->
+      <div class="page" id="page-logs">
+        <div class="page-header">
+          <h2>操作日志</h2>
+        </div>
+        
+        <div id="log-output"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 自定义弹窗 -->
+  <div id="custom-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">提示</h3>
+      </div>
+      <div class="modal-body">
+        <p id="modal-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-cancel" class="btn btn-secondary">取消</button>
+        <button id="modal-confirm" class="btn btn-primary">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 通知容器 -->
+  <div id="toast-container"></div>
+
+  <script src="renderer.js"></script>
+  <script>
+    // 初始化 Lucide 图标
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
