@@ -27,6 +27,7 @@ class ProcessMonitor {
             return true;
           }
         }
+        // 不再使用 PowerShell 模糊匹配，避免误判其他进程
         return false;
       } else if (this.platform === 'darwin') {
         // macOS: 使用 ps,排除 papercrane 进程
@@ -54,70 +55,41 @@ class ProcessMonitor {
   }
 
   /**
-   * 获取 Windsurf 进程列表
-   */
-  async getWindsurfProcesses() {
-    try {
-      if (this.platform === 'win32') {
-        const { stdout } = await execPromise('tasklist /FI "IMAGENAME eq Windsurf.exe"');
-        const lines = stdout.split('\n').filter(line => {
-          const lower = line.toLowerCase();
-          return lower.includes('windsurf.exe') && !lower.includes('papercrane');
-        });
-        return lines.map(line => {
-          const parts = line.trim().split(/\s+/);
-          return {
-            name: parts[0],
-            pid: parts[1],
-            memory: parts[4]
-          };
-        });
-      } else {
-        try {
-          const { stdout } = await execPromise('ps aux | grep -i windsurf | grep -v grep | grep -v -i papercrane');
-          const lines = stdout.trim().split('\n').filter(line => line.trim().length > 0);
-          return lines.map(line => {
-            const parts = line.trim().split(/\s+/);
-            return {
-              user: parts[0],
-              pid: parts[1],
-              cpu: parts[2],
-              memory: parts[3],
-              command: parts.slice(10).join(' ')
-            };
-          });
-        } catch (error) {
-          // grep 没有找到匹配时会返回错误码
-          return [];
-        }
-      }
-    } catch (error) {
-      console.error('获取进程列表失败:', error);
-      return [];
-    }
-  }
-
-  /**
    * 关闭 Windsurf 进程
+   * @returns {Promise<{killed: boolean, wasRunning: boolean}>} 返回是否成功关闭和是否原本在运行
    */
   async killWindsurf() {
     try {
       if (this.platform === 'win32') {
-        // Windows: 使用 taskkill
-        await execPromise('taskkill /F /IM Windsurf.exe');
-        return true;
+        // Windows: 使用 taskkill，捕获输出判断是否有进程被关闭
+        const { stdout, stderr } = await execPromise('taskkill /F /IM Windsurf.exe');
+        const output = (stdout + stderr).toLowerCase();
+        // 如果输出包含"成功"或"已终止"，说明有进程被关闭
+        if (output.includes('成功') || output.includes('已终止') || output.includes('success') || output.includes('terminated')) {
+          return { killed: true, wasRunning: true };
+        }
+        // 如果包含"找不到"或"not found"，说明没有该进程
+        if (output.includes('找不到') || output.includes('not found') || output.includes('not running')) {
+          return { killed: true, wasRunning: false };
+        }
+        return { killed: true, wasRunning: true };
       } else if (this.platform === 'darwin') {
         // macOS: 使用 killall
         await execPromise('killall Windsurf');
-        return true;
+        return { killed: true, wasRunning: true };
       } else {
         // Linux: 使用 killall
         await execPromise('killall windsurf');
-        return true;
+        return { killed: true, wasRunning: true };
       }
     } catch (error) {
       console.error('关闭 Windsurf 失败:', error);
-      return false;
+      const errorMsg = error.message.toLowerCase();
+      // 如果错误是"找不到进程"，说明本来就没运行
+      if (errorMsg.includes('找不到') || errorMsg.includes('not found') || errorMsg.includes('no such process')) {
+        return { killed: true, wasRunning: false };
+      }
+      return { killed: false, wasRunning: true };
     }
   }
 

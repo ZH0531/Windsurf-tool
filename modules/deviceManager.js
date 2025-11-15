@@ -39,6 +39,23 @@ class DeviceManager {
   }
 
   /**
+   * 移除文件只读属性（Windows）
+   */
+  removeReadOnly(filePath) {
+    if (process.platform !== 'win32' || !fs.existsSync(filePath)) {
+      return;
+    }
+    
+    try {
+      // 使用 attrib 命令移除只读属性
+      execSync(`attrib -R "${filePath}"`, { windowsHide: true });
+      console.log(`✅ 已移除文件只读属性: ${path.basename(filePath)}`);
+    } catch (error) {
+      console.error(`移除只读属性失败: ${error.message}`);
+    }
+  }
+
+  /**
    * 获取真实的 MAC 地址
    */
   getRealMacAddress() {
@@ -172,8 +189,24 @@ class DeviceManager {
         console.log('✅ 注册表 MachineGuid 已重置:', newGuid);
         return { oldGuid, newGuid };
       } catch (writeError) {
-        console.error('❌ 写入注册表失败（可能需要管理员权限）:', writeError.message);
-        throw new Error('需要管理员权限来修改注册表');
+        console.warn('⚠️ 写入注册表失败（尝试以管理员权限执行-非阻塞）:', writeError.message);
+        // 使用 PowerShell 以管理员权限执行 reg 命令，仅对该命令提权，不重启应用；不等待结果，避免阻塞主进程
+        try {
+          const { spawn } = require('child_process');
+          const psCommand = `Start-Process cmd -ArgumentList '/c reg add "${regPath}" /v ${valueName} /t REG_SZ /d "${newGuid}" /f' -Verb RunAs`;
+          const child = spawn('powershell.exe', ['-NoProfile', '-Command', psCommand], {
+            detached: true,
+            stdio: 'ignore',
+            shell: false
+          });
+          child.unref();
+          console.log('ℹ️ 已发起UAC提权以修改 MachineGuid，请在系统提示中确认');
+          // 标记为已发起（待用户确认），不阻塞流程
+          return { oldGuid, newGuid, pending: true };
+        } catch (e2) {
+          console.error('❌ 启动提权命令失败:', e2.message);
+          throw new Error('需要管理员权限来修改注册表');
+        }
       }
     } catch (error) {
       console.error('重置注册表 MachineGuid 失败:', error);
@@ -202,20 +235,25 @@ class DeviceManager {
         throw new Error(`未找到 storage.json: ${this.storagePath}`);
       }
 
-      // 3. 读取现有配置
+      // 3. 移除只读属性（避免写入失败）
+      this.removeReadOnly(this.storagePath);
+
+      // 4. 读取现有配置
       const storage = JSON.parse(fs.readFileSync(this.storagePath, 'utf-8'));
 
-      // 4. 生成新设备码
+      // 5. 生成新设备码
       const newIds = this.generateMachineIds();
 
-      // 5. 更新这4个字段
+      // 6. 更新这4个字段
       storage['telemetry.machineId'] = newIds['telemetry.machineId'];
       storage['telemetry.macMachineId'] = newIds['telemetry.macMachineId'];
       storage['telemetry.devDeviceId'] = newIds['telemetry.devDeviceId'];
       storage['telemetry.sqmId'] = newIds['telemetry.sqmId'];
 
-      // 6. 写入（保持原有格式）
+      // 7. 写入（保持原有格式）
       fs.writeFileSync(this.storagePath, JSON.stringify(storage, null, 4));
+      
+      // 注意：不再恢复只读属性，避免下次写入失败
 
       console.log('✅ storage.json 设备码已重置');
       

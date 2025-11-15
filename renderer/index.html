@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PaperCrane-Windsurf</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Lucide Icons (bundled local copy for fast loading) -->
+  <script defer src="lucide.min.js"></script>
 </head>
 <body>
   <div class="app-layout">
@@ -29,6 +29,9 @@
           <span class="nav-text">日志</span>
         </a>
       </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-version">v1.0.0</div>
+      </div>
     </aside>
 
     <!-- 右侧主内容区 -->
@@ -39,31 +42,67 @@
           <h2>Windsurf 续杯工具</h2>
         </div>
         
-        <!-- 信息卡片 -->
-        <div class="info-card">
-          <div class="card-header-row">
-            <h3>账号信息</h3>
-            <button id="refresh-btn" class="icon-btn" title="刷新信息">
-              <i data-lucide="refresh-cw"></i>
-            </button>
-          </div>
-          <div class="status-section">
-            <div class="status-row">
-              <span class="status-label">状态：</span>
-              <div class="status-value">
-                <span class="status-dot" id="status-dot"></span>
-                <span id="status-text">检测中...</span>
+        <!-- 双列卡片容器 -->
+        <div class="two-column-grid">
+          <!-- 激活秘钥卡片 -->
+          <div class="info-card">
+            <div class="card-header-row">
+              <h3>激活秘钥</h3>
+              <button id="refresh-key-btn" class="icon-btn" title="刷新秘钥状态">
+                <i data-lucide="refresh-cw"></i>
+              </button>
+            </div>
+            <div class="key-section">
+              <div class="key-input-row">
+                <input type="password" id="key-input" class="key-input" placeholder="请输入激活秘钥" />
+                <button id="save-key-btn" class="btn btn-primary btn-small">
+                  <i data-lucide="save"></i>
+                  <span>保存</span>
+                </button>
+              </div>
+              <div class="key-info-section">
+                <div class="key-info-row">
+                  <span class="key-info-label">秘钥状态：</span>
+                  <span class="key-info-value" id="key-status">未激活</span>
+                </div>
+                <div class="key-info-row">
+                  <span class="key-info-label">剩余时间：</span>
+                  <span class="key-info-value" id="key-remaining-time">-</span>
+                </div>
+                <div class="key-info-row">
+                  <span class="key-info-label">剩余可用账号：</span>
+                  <span class="key-info-value" id="key-remaining-summary">-</span>
+                </div>
               </div>
             </div>
-            
-            <div class="status-row">
-              <span class="status-label">当前账号：</span>
-              <span class="status-value" id="current-email">加载中...</span>
+          </div>
+
+          <!-- 账号信息卡片 -->
+          <div class="info-card">
+            <div class="card-header-row">
+              <h3>账号信息</h3>
+              <button id="refresh-btn" class="icon-btn" title="刷新信息">
+                <i data-lucide="refresh-cw"></i>
+              </button>
             </div>
-            
-            <div class="status-row">
-              <span class="status-label">Token：</span>
-              <span class="status-value" id="current-token">加载中...</span>
+            <div class="status-section">
+              <div class="status-row">
+                <span class="status-label">状态：</span>
+                <div class="status-value">
+                  <span class="status-dot" id="status-dot"></span>
+                  <span id="status-text">检测中...</span>
+                </div>
+              </div>
+              
+              <div class="status-row">
+                <span class="status-label">当前账号：</span>
+                <span class="status-value" id="current-email">加载中...</span>
+              </div>
+              
+              <div class="status-row">
+                <span class="status-label">Token：</span>
+                <span class="status-value" id="current-token">加载中...</span>
+              </div>
             </div>
           </div>
         </div>
@@ -104,34 +143,73 @@
         </div>
       </div>
 
-      <!-- 切换账号页面 -->
+      <!-- 账号管理页面 -->
       <div class="page" id="page-switch">
         <div class="page-header">
-          <h2>切换账号</h2>
+          <h2>账号管理</h2>
         </div>
         
-        <div class="form-container">
-          <div class="form-group">
-            <label>Token（API Key）</label>
-            <input type="password" id="token-input" placeholder="sk-ws-...">
-          </div>
-          
-          <div class="form-group">
-            <label>邮箱</label>
-            <input type="email" id="email-input" placeholder="your@email.com">
-          </div>
-          
-          <div class="form-group">
-            <label>显示标签</label>
-            <input type="text" id="label-input" placeholder="PaperCrane" value="PaperCrane">
-            <small>默认为 PaperCrane，可自定义</small>
-          </div>
-          
-          <button id="switch-btn" class="btn btn-primary btn-large">
-            <i data-lucide="repeat"></i>
-            <span>切换账号</span>
+        <!-- 快捷操作按钮 -->
+        <div class="switch-actions">
+          <button id="one-click-switch-btn" class="btn btn-secondary">
+            <i data-lucide="zap"></i>
+            <span>一键换号</span>
           </button>
-          <p class="tip">切换账号将自动关闭并重启 Windsurf，请稍候</p>
+          <button id="reset-device-switch-btn" class="btn btn-secondary">
+            <i data-lucide="smartphone"></i>
+            <span>重置设备码</span>
+          </button>
+          <button id="manual-input-btn" class="btn btn-secondary">
+            <i data-lucide="edit"></i>
+            <span>获取账号密码</span>
+          </button>
+        </div>
+
+        <!-- 历史账号列表 -->
+        <div class="history-container">
+          <div class="history-header">
+            <h3>历史账号</h3>
+            <div class="history-stats">
+              <span class="stat-item">总数：<strong id="history-total">0</strong></span>
+              <span class="stat-item">已用：<strong id="history-marked">0</strong></span>
+            </div>
+          </div>
+          <div class="history-list" id="history-list">
+            <!-- 动态生成列表 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 手动输入模态框 -->
+      <div id="manual-input-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>手动输入账号</h3>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Token（API Key）</label>
+              <input type="password" id="modal-token-input" placeholder="sk-ws-...">
+            </div>
+            
+            <div class="form-group">
+              <label>邮箱</label>
+              <input type="email" id="modal-email-input" placeholder="your@email.com">
+            </div>
+            
+            <div class="form-group">
+              <label>显示标签</label>
+              <input type="text" id="modal-label-input" placeholder="PaperCrane" value="PaperCrane">
+              <small>默认为 PaperCrane，可自定义</small>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="manual-input-cancel" class="btn btn-secondary">取消</button>
+            <button id="manual-input-confirm" class="btn btn-primary">
+              <i data-lucide="repeat"></i>
+              <span>切换账号</span>
+            </button>
+          </div>
         </div>
       </div>
 

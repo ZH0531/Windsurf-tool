@@ -20,6 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.0",
+    "lucide": "^0.553.0",
     "sql.js": "^1.10.3",
     "uuid": "^9.0.1"
   },
@@ -31,23 +32,53 @@
     "appId": "com.papercrane.windsurf",
     "productName": "PaperCrane-Windsurf",
     "publish": null,
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/sql.js/**/*"
+    ],
     "directories": {
       "output": "dist"
     },
     "files": [
       "**/*",
-      "!**/*.md"
+      "!**/*.md",
+      "!dist",
+      "!.git",
+      "!.github",
+      "!PERFORMANCE_DEBUG.md"
     ],
     "win": {
-      "target": ["nsis", "portable"]
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "requestedExecutionLevel": "asInvoker"
     },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PaperCrane-Windsurf"
+    },
+    "portable": {
+      "requestExecutionLevel": "user",
+      "unpackDirName": "PaperCrane-Windsurf"
+    },
+    "compression": "normal",
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "icon": "assets/icon.icns",
       "category": "public.app-category.developer-tools"
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "assets/icon.png",
       "category": "Development"
     }
